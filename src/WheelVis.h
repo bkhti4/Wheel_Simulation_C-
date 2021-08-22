@@ -30,7 +30,11 @@ public:
     WheelVis(QWidget *parent = nullptr);
     ~WheelVis();
 
-    WheelSim wheelSim;
+    WheelSim wheel_left_front;
+    WheelSim wheel_right_front;
+    WheelSim wheel_left_rear;
+    WheelSim wheel_right_rear;
+
     CarSim carSim;
 
 private:
@@ -38,8 +42,6 @@ private:
     Ui::WheelVisualizer *ui;
 
     void keyPressEvent(QKeyEvent *event) override;
-    // void UpdateRotationSpeed();
-    // void UpdateSpeedGraph();
 
 protected:
     void timerEvent(QTimerEvent *event);

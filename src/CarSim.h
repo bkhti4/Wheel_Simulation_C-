@@ -1,6 +1,11 @@
 #ifndef CARSIM_H
 #define CARSIM_H
 
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+
 
 class CarSim
 {
@@ -14,6 +19,9 @@ public:
     double lambda = 1.0;
     double yawMoment = 617.0; //kg . m^2
     double Mz = 0.0;
+
+    double numberOfWheels = 4.0;
+    double track_width = 2.0; // m
 
     double brakePower = 0.0; // kW
     double prevBrakePower = 0.0; // kW
@@ -42,6 +50,8 @@ public:
     double Accmax = 80.0; // m/s²
     double slip = 0.0;
     double sideSlip = 0.0;
+
+    std::vector<double> calculate_slip_angle(double velocity_x, double velocity_y, double steering_angle, double yaw_rate);
 };
 
 

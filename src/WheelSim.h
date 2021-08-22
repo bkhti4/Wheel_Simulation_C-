@@ -10,10 +10,9 @@ class WheelSim
 {
 
 public:
-    int numberOfWheels = 4;
     std::vector<double> lateralForces;
     std::vector<double> longitudnalForces;
-    double Vmax = 69.44;
+    double Vmax = 288.14;
 
     double tireRadius = 0.2;
     double tireWidth = 0.05;
@@ -24,9 +23,9 @@ public:
     double B_fy = 10.0; // maxmimum stiffness value
 
     double tempRef = 50.0;
-    double tempThread = 0.0;
-    double tempCarcass = 0.0;
-    double tempGas = 0.0;
+    double tempThread = 30.0;
+    double tempCarcass = 30.0;
+    double tempGas = 30.0;
     double tempThreadDot = 0.0;
     double tempCarcassDot = 0.0;
     double tempGasDot = 0.0;
@@ -35,7 +34,6 @@ public:
     double tempAmbient = 30.0; // degrees
     double temperature = 30.0; //current temperature
     double tempRoad = 45.0;
-    double p_cold = 1.2;
 
     // Magic Formula params
     double B = 1.0; // stiffness factor
@@ -46,10 +44,10 @@ public:
     double Sv = 0.0; // vertical shift
 
     // efficiency params
-    double Ex = 0.01; // carcass longitudnal force efficiency factor
-    double Ey = 0.001; // carcass lateral force efficiency factor
-    double Ez = 0.001; // carcass vertical force efficiency factor
-    double mu_d = 1.0; // dynamic friction coefficient
+    double Ex = 0.001; // carcass longitudnal force efficiency factor
+    double Ey = 0.01; // carcass lateral force efficiency factor
+    double Ez = 0.01; // carcass vertical force efficiency factor
+    double mu_d; // dynamic friction coefficient
 
     // thermal model params
     double Q_thread = 0.0;
@@ -75,7 +73,7 @@ public:
     double M_gas = 100.0; // mass of inflation gas
 
     // dynamic friction params
-    double mu_base = 2.0;
+    double mu_base = 0.13;
 
     // peak friction coefficient tuning params
     double a1 = 0.0;

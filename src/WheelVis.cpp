@@ -187,8 +187,6 @@ void WheelVis::keyPressEvent(QKeyEvent *event)
         pix.fill(Qt::transparent);
         QPainter painter(&pix);
         carSim.steeringAngle -= 2.5;
-//        carSim.slip -= 0.01;
-//        carSim.sideSlip -= 0.01;
 
         carSim.steeringAngle = std::max(carSim.steeringAngle, -carSim.maxSteeringAngle);
         QLabel *strAngStatus = ui->SteeringLabel;
@@ -204,7 +202,7 @@ void WheelVis::keyPressEvent(QKeyEvent *event)
         painter.translate(160.0, 140.0);
         painter.rotate(carSim.steeringAngle);
         QPoint newPoint = QPoint(0, 0);
-        painter.drawImage(QPoint(-99, -99), QImage("/home/bkhti4u/RandomShitte/WheelSimVis/steering-icon.png"));
+        painter.drawImage(QPoint(-99, -99), QImage("../fig/steering-icon.png"));
         ui->wheelVisLabel->setPixmap(pix);
     }
     else if(event->key() == Qt::Key_Right)
@@ -213,8 +211,6 @@ void WheelVis::keyPressEvent(QKeyEvent *event)
         pix.fill(Qt::transparent);
         QPainter painter(&pix);
         carSim.steeringAngle += 2.5;
-//        carSim.slip += 0.01;
-//        carSim.sideSlip += 0.01;
 
         carSim.steeringAngle = std::min(carSim.steeringAngle, carSim.maxSteeringAngle);
         QLabel *strAngStatus = ui->SteeringLabel;
@@ -224,7 +220,7 @@ void WheelVis::keyPressEvent(QKeyEvent *event)
 
         painter.translate(160.0, 140.0);
         painter.rotate(carSim.steeringAngle);
-        painter.drawImage(QPoint(-99, -99), QImage("/home/bkhti4u/RandomShitte/WheelSimVis/steering-icon.png"));
+        painter.drawImage(QPoint(-99, -99), QImage("../fig/steering-icon.png"));
         ui->wheelVisLabel->setPixmap(pix);
     }
 }
@@ -250,32 +246,49 @@ void WheelVis::timerEvent(QTimerEvent *event)
     carSim.longitudnalVelocity = velocity * cos(carSim.steeringAngle * (M_PI / 180.0));
     carSim.lateralVelocity = -velocity * sin(carSim.steeringAngle * (M_PI / 180.0));
 
+    if (abs(carSim.lateralVelocity) < 0.2)
+    {
+        carSim.lateralVelocity = 0.0;
+    }
+
+
     double tmpCarX = 0.0;
     double tmpCarY = 0.0;
-    double carFz = (carSim.mass * 9.81) / wheelSim.numberOfWheels; // this will change when roll and suspension is integrated
+    double carFz = (carSim.mass * 9.81) / carSim.numberOfWheels; // this will change when roll and suspension is integrated
 
-    carSim.yawRate += carSim.dotYawRate * 0.1; //(carSim.steeringAngle - carSim.lastAngle) / 0.1;
-    //yaw_rate *= (M_PI / 180.0);
+    carSim.yawRate += carSim.dotYawRate * 0.1;
 
-    std::vector<double> slipVector = wheelSim.calculate_slip_angle(carSim.longitudnalVelocity, carSim.lateralVelocity, carSim.steeringAngle * (M_PI / 180.0), carSim.yawRate);
+    std::vector<double> slipVector = carSim.calculate_slip_angle(carSim.longitudnalVelocity, carSim.lateralVelocity, carSim.steeringAngle * (M_PI / 180.0), carSim.yawRate);
 
-    double effective_z = carFz / (wheelSim.tirePressure * 1000.0); // https://www.slideshare.net/PankajDas19/tire-forces-and-moments
-    double effective_radius_load = wheelSim.tireRadius * (1 - (effective_z / (3 * wheelSim.tireRadius))); // https://the-contact-patch.com/book/road/c2019-the-contact-patch
-    double longitudnal_slip = (wheelSim.tireRadius - effective_radius_load) / wheelSim.tireRadius;
+    double effective_z = carFz / (wheel_left_front.tirePressure * 1000.0); // https://www.slideshare.net/PankajDas19/tire-forces-and-moments
+    double effective_radius_load = wheel_left_front.tireRadius * (1 - (effective_z / (3 * wheel_left_front.tireRadius))); // https://the-contact-patch.com/book/road/c2019-the-contact-patch
+    double longitudnal_slip = (wheel_left_front.tireRadius - effective_radius_load) / wheel_left_front.tireRadius;
 
-    double Fx_lf = wheelSim.TempXTyreModel(longitudnal_slip);
-    double Fx_rf = wheelSim.TempXTyreModel(longitudnal_slip);
-    double Fx_lr = wheelSim.TempXTyreModel(longitudnal_slip);
-    double Fx_rr = wheelSim.TempXTyreModel(longitudnal_slip);
+    double Fx_lf = wheel_left_front.TempXTyreModel(longitudnal_slip);
+    double Fx_rf = wheel_right_front.TempXTyreModel(longitudnal_slip);
+    double Fx_lr = wheel_left_rear.TempXTyreModel(longitudnal_slip);
+    double Fx_rr = wheel_right_rear.TempXTyreModel(longitudnal_slip);
 
-    double Fy_lf = wheelSim.TyreModel(slipVector[0]);
-    double Fy_rf = wheelSim.TyreModel(slipVector[1]);
-    double Fy_lr = wheelSim.TyreModel(slipVector[2]);
-    double Fy_rr = wheelSim.TyreModel(slipVector[3]);
+    double Fy_lf = wheel_left_front.TempYTyreModel(slipVector[0], carFz);
+    double Fy_rf = wheel_right_front.TempYTyreModel(slipVector[1], carFz);
+    double Fy_lr = wheel_left_rear.TempYTyreModel(slipVector[2], carFz);
+    double Fy_rr = wheel_right_rear.TempYTyreModel(slipVector[3], carFz);
 
-//    std::vector<double> forcesVector3DLeftFront = {Fx_lf, Fy_lf, carFz};
-//    wheelSim.tyreThermalModel(forcesVector3DLeftFront, longitudnalVelocity, sideVelocity);
-//    wheelSim.updateTimeDelta(0.1);
+    std::vector<double> forcesVector3DLeftFront = {Fx_lf, Fy_lf, carFz};
+    wheel_left_front.tyreThermalModel(forcesVector3DLeftFront, carSim.longitudnalVelocity, carSim.lateralVelocity);
+    wheel_left_front.updateTimeDelta(0.1);
+
+    std::vector<double> forcesVector3DRightFront = {Fx_rf, Fy_rf, carFz};
+    wheel_right_front.tyreThermalModel(forcesVector3DRightFront, carSim.longitudnalVelocity, carSim.lateralVelocity);
+    wheel_right_front.updateTimeDelta(0.1);
+
+    std::vector<double> forcesVector3DLeftRear = {Fx_lr, Fy_lr, carFz};
+    wheel_left_rear.tyreThermalModel(forcesVector3DLeftRear, carSim.longitudnalVelocity, carSim.lateralVelocity);
+    wheel_left_rear.updateTimeDelta(0.1);
+
+    std::vector<double> forcesVector3DRightRear = {Fx_rr, Fy_rr, carFz};
+    wheel_right_rear.tyreThermalModel(forcesVector3DRightRear, carSim.longitudnalVelocity, carSim.lateralVelocity);
+    wheel_right_rear.updateTimeDelta(0.1);
 
     carSim.carFx = (Fx_lf + Fx_rf + Fx_lr + Fx_rr) / 4.0;
     carSim.carFy = (Fy_lf + Fy_rf + Fy_lr + Fy_rr) / 4.0;
@@ -384,8 +397,23 @@ void WheelVis::timerEvent(QTimerEvent *event)
     rightRLatStatus->setText("Lateral Force:  " + QString::fromStdString(rightRearLatString.str()));
 
 
-//    QLabel *leftFTempStatus = ui->leftFrontTempQlabel;
-//    leftFTempStatus->clear();
-//    leftFrontTempString << std::fixed << std::setprecision(2) << wheelSim.temperature;
-//    leftFTempStatus->setText("Temperature:  " + QString::fromStdString(leftFrontTempString.str()));
+    QLabel *leftFTempStatus = ui->leftFrontTempQlabel;
+    leftFTempStatus->clear();
+    leftFrontTempString << std::fixed << std::setprecision(2) << wheel_left_front.temperature;
+    leftFTempStatus->setText("Temperature:  " + QString::fromStdString(leftFrontTempString.str()));
+
+    QLabel *rightFTempStatus = ui->rightFrontTempQlabel;
+    rightFTempStatus->clear();
+    rightFrontTempString << std::fixed << std::setprecision(2) << wheel_right_front.temperature;
+    rightFTempStatus->setText("Temperature:  " + QString::fromStdString(rightFrontTempString.str()));
+
+    QLabel *leftRTempStatus = ui->leftRearTempQlabel;
+    leftRTempStatus->clear();
+    leftRearTempString << std::fixed << std::setprecision(2) << wheel_left_rear.temperature;
+    leftRTempStatus->setText("Temperature:  " + QString::fromStdString(leftRearTempString.str()));
+
+    QLabel *rightRTempStatus = ui->rightRearTempQlabel;
+    rightRTempStatus->clear();
+    rightRearTempString << std::fixed << std::setprecision(2) << wheel_right_rear.temperature;
+    rightRTempStatus->setText("Temperature:  " + QString::fromStdString(rightRearTempString.str()));
 }

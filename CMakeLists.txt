@@ -26,6 +26,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 set(PROJECT_SOURCES
         src/main.cpp
         src/CarSim.h
+        src/CarSim.cpp
         src/WheelSim.cpp
         src/WheelSim.h
         src/WheelVis.cpp
